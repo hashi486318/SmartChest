@@ -1,0 +1,11 @@
+{
+  "type": "mekanism:chemical_conversion",
+  "input": {
+    "count": 1,
+    "tag": "c:coal_coke"
+  },
+  "output": {
+    "amount": 30,
+    "id": "mekanism:carbon"
+  }
+}

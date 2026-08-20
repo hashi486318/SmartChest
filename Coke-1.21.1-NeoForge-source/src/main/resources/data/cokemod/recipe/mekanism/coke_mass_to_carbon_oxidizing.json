@@ -1,0 +1,11 @@
+{
+  "type": "mekanism:oxidizing",
+  "input": {
+    "count": 1,
+    "item": "cokemod:coke_mass"
+  },
+  "output": {
+    "amount": 270,
+    "id": "mekanism:carbon"
+  }
+}

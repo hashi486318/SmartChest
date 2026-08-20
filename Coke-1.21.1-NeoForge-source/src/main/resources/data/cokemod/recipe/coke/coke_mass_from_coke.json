@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "AAA",
+    "AAA",
+    "AAA"
+  ],
+  "key": {
+    "A": {
+      "item": "cokemod:coke"
+    }
+  },
+  "result": {
+    "id": "cokemod:coke_mass",
+    "count": 1
+  }
+}

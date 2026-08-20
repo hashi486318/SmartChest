@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "tag": "minecraft:coals"
+  },
+  "result": {
+    "id": "cokemod:coke",
+    "count": 1
+  },
+  "experience": 0.7,
+  "cookingtime": 200
+}
