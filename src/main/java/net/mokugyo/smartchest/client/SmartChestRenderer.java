@@ -65,15 +65,13 @@ public class SmartChestRenderer implements BlockEntityRenderer<SmartChestBlockEn
         openNess = 1.0F - openNess;
         openNess = 1.0F - openNess * openNess * openNess;
 
-        float lidAngle = -(openNess * 1.5707964F); // 0〜90度（ラジアン）
-        model.lid().xRot = lidAngle;
-        model.lock().xRot = lidAngle;
+        // 0〜90度（ラジアン）
+        model.lid().xRot = -(openNess * 1.5707964F);
 
         VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.entityCutout(TEXTURE));
 
         model.bottom().render(poseStack, vertexConsumer, packedLight, packedOverlay);
         model.lid().render(poseStack, vertexConsumer, packedLight, packedOverlay);
-        model.lock().render(poseStack, vertexConsumer, packedLight, packedOverlay);
 
         poseStack.popPose();
     }
