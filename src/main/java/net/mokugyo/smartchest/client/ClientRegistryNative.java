@@ -6,7 +6,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 
@@ -17,11 +17,12 @@ public class ClientRegistryNative {
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         // BlockEntity レンダラーは既に ClientSetup で登録済み
 
-        BlockEntityRenderDispatcher dispatcher = event.getBlockEntityRenderDispatcher();
-        EntityModelSet modelSet = event.getEntityModelSet();
+        // Minecraft インスタンスから dispatcher / modelSet を取得して SmartChestItemRenderer を作成
+        var dispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
+        EntityModelSet modelSet = Minecraft.getInstance().getEntityModels();
         var itemRenderer = new SmartChestItemRenderer(dispatcher, modelSet);
 
-        // ネイティブな登録 API を直接呼ぶ（Fabric API を使わない）
+        // ネイティブな登録 API を直接呼ぶ
         BlockEntityRenderers.registerBuiltinItemRenderer(ModItems.SMART_CHEST_ITEM.get(), itemRenderer);
     }
 }
