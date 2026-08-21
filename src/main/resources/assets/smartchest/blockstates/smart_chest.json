@@ -1,8 +1,5 @@
 {
     "variants": {
-        "facing=north": { "model": "smartchest:block/smart_chest" },
-        "facing=south": { "model": "smartchest:block/smart_chest", "y": 180 },
-        "facing=west":  { "model": "smartchest:block/smart_chest", "y": 270 },
-        "facing=east":  { "model": "smartchest:block/smart_chest", "y": 90 }
+        "": { "model": "smartchest:block/smart_chest" }
     }
 }

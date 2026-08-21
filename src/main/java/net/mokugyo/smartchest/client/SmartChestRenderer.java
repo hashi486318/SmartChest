@@ -29,7 +29,7 @@ import net.mokugyo.smartchest.blockentity.SmartChestBlockEntity;
 public class SmartChestRenderer implements BlockEntityRenderer<SmartChestBlockEntity> {
 
     private static final ResourceLocation TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(SmartChest.MOD_ID, "textures/entity/smart_chest.png");
+            ResourceLocation.fromNamespaceAndPath(SmartChest.MOD_ID, "textures/model/smart_chest.png");
 
     private final SmartChestModel model;
 
