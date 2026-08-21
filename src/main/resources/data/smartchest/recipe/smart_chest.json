@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "TRT",
+    "BCB",
+    "LSL"
+  ],
+  "key": {
+    "T": {
+      "item": "minecraft:redstone_torch"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "B": {
+      "item": "minecraft:book"
+    },
+    "C": {
+      "item": "minecraft:trapped_chest"
+    },
+    "L": {
+      "item": "minecraft:repeater"
+    },
+    "S": {
+      "item": "minecraft:lectern"
+    }
+  },
+  "result": {
+    "id": "smartchest:smart_chest",
+    "count": 1
+  }
+}
