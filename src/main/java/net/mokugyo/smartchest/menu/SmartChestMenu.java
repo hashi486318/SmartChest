@@ -144,6 +144,11 @@ public class SmartChestMenu extends AbstractContainerMenu {
     }
 
     @Override
+    public boolean canTakeItemForPickAll(ItemStack stack, Slot slot) {
+        return slot != this.iconSlot && super.canTakeItemForPickAll(stack, slot);
+    }
+
+    @Override
     public void removed(Player player) {
         super.removed(player);
         if (blockEntity != null && blockEntity.getLevel() != null && !blockEntity.getLevel().isClientSide()) {
