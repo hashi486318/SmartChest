@@ -1,16 +1,16 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "TRT",
+    "TOT",
     "BCB",
-    "LSL"
+    "PSP"
   ],
   "key": {
     "T": {
       "item": "minecraft:redstone_torch"
     },
-    "R": {
-      "item": "minecraft:redstone"
+    "O": {
+      "item": "minecraft:observer"
     },
     "B": {
       "item": "minecraft:book"
@@ -18,8 +18,8 @@
     "C": {
       "item": "minecraft:trapped_chest"
     },
-    "L": {
-      "item": "minecraft:repeater"
+    "P": {
+      "item": "minecraft:comparator"
     },
     "S": {
       "item": "minecraft:lectern"
