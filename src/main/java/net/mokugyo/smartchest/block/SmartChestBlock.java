@@ -15,13 +15,20 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -33,10 +40,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class SmartChestBlock extends ChestBlock {
+public class SmartChestBlock extends BaseEntityBlock implements SimpleWaterloggedBlock {
 
     public static final MapCodec<SmartChestBlock> CODEC = simpleCodec(SmartChestBlock::new);
-    public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+
+    private static final long CONFIRM_DESTROY_TICKS = 100L;
 
     private record ClickInfo(BlockPos pos, long time) {}
     private static final Map<UUID, ClickInfo> confirmTimers = new HashMap<>();
@@ -44,12 +54,16 @@ public class SmartChestBlock extends ChestBlock {
     private static final VoxelShape SHAPE = Block.box(1.0D, 0.0D, 1.0D, 15.0D, 14.0D, 15.0D);
 
     public SmartChestBlock(Properties properties) {
-        super(properties, ModBlockEntities.SMART_CHEST_BLOCKENTITY::get);
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
-                .setValue(ChestBlock.TYPE, net.minecraft.world.level.block.state.properties.ChestType.SINGLE)
-                .setValue(ChestBlock.WATERLOGGED, false)
+                .setValue(WATERLOGGED, false)
         );
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, WATERLOGGED);
     }
 
     @Override
@@ -58,18 +72,25 @@ public class SmartChestBlock extends ChestBlock {
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        super.createBlockStateDefinition(builder);
-    }
-
-    @Override
-    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
-        return state;
-    }
-
-    @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        FluidState fluid = context.getLevel().getFluidState(context.getClickedPos());
+        return this.defaultBlockState()
+                .setValue(FACING, context.getHorizontalDirection().getOpposite())
+                .setValue(WATERLOGGED, fluid.getType() == Fluids.WATER);
+    }
+
+    @Override
+    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
+                                  LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+        }
+        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
     @Override
@@ -79,14 +100,15 @@ public class SmartChestBlock extends ChestBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
-    // ★ Iron Chest方式のクライアントティックをブロック側から登録する
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
-        return level.isClientSide() ? createTickerHelper(blockEntityType, ModBlockEntities.SMART_CHEST_BLOCKENTITY.get(), SmartChestBlockEntity::clientTick) : null;
+        return level.isClientSide()
+                ? createTickerHelper(blockEntityType, ModBlockEntities.SMART_CHEST_BLOCKENTITY.get(), SmartChestBlockEntity::clientTick)
+                : null;
     }
 
     private static boolean isBlocked(Level level, BlockPos pos) {
@@ -95,7 +117,8 @@ public class SmartChestBlock extends ChestBlock {
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+                                             Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (hand != InteractionHand.MAIN_HAND) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
@@ -106,7 +129,7 @@ public class SmartChestBlock extends ChestBlock {
                 long currentTime = level.getGameTime();
                 ClickInfo lastClick = confirmTimers.get(playerUUID);
 
-                if (lastClick != null && lastClick.pos().equals(pos) && (currentTime - lastClick.time() < 100)) {
+                if (lastClick != null && lastClick.pos().equals(pos) && (currentTime - lastClick.time() < CONFIRM_DESTROY_TICKS)) {
                     confirmTimers.remove(playerUUID);
                     player.displayClientMessage(Component.translatable("message.smartchest.destroyed"), true);
                     level.destroyBlock(pos, true, player);
@@ -114,6 +137,8 @@ public class SmartChestBlock extends ChestBlock {
                     confirmTimers.put(playerUUID, new ClickInfo(pos, currentTime));
                     player.sendSystemMessage(Component.translatable("message.smartchest.confirm_destroy"));
                 }
+
+                confirmTimers.entrySet().removeIf(entry -> currentTime - entry.getValue().time() >= CONFIRM_DESTROY_TICKS);
             }
             return ItemInteractionResult.SUCCESS;
         }
@@ -125,16 +150,15 @@ public class SmartChestBlock extends ChestBlock {
 
             BlockEntity blockEntity = level.getBlockEntity(pos);
             if (blockEntity instanceof SmartChestBlockEntity smartChest && player instanceof ServerPlayer serverPlayer) {
-                // ★ ここで開閉音を鳴らすとともに、startOpenを呼び出してopenCountを増やす
                 level.playSound(
                         null,
                         pos,
                         SoundEvents.CHEST_OPEN,
                         SoundSource.BLOCKS,
                         0.5F,
-                        1.0F
+                        level.random.nextFloat() * 0.1F + 0.9F
                 );
-                smartChest.startOpen(player); // 追加
+                smartChest.startOpen(player);
                 serverPlayer.openMenu(smartChest, pos);
             }
         }

@@ -16,7 +16,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.mokugyo.smartchest.menu.SmartChestMenu;
 import net.mokugyo.smartchest.registry.ModBlockEntities;
@@ -24,9 +23,15 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 
 import javax.annotation.Nullable;
 
-public class SmartChestBlockEntity extends ChestBlockEntity implements MenuProvider {
+public class SmartChestBlockEntity extends BlockEntity implements MenuProvider {
 
-    public static final int TOTAL_SLOTS = 540;
+    public static final int PAGE_SIZE = 54;
+    public static final int PAGE_COUNT = 10;
+    public static final int TOTAL_SLOTS = PAGE_SIZE * PAGE_COUNT;
+
+    private static final byte SYNC_OPEN_COUNT = 1;
+    private static final byte SYNC_PAGE_ICONS = 2;
+    private static final byte SYNC_ALL = SYNC_OPEN_COUNT | SYNC_PAGE_ICONS;
 
     private final ItemStackHandler inventory = new ItemStackHandler(TOTAL_SLOTS) {
         @Override
@@ -35,13 +40,11 @@ public class SmartChestBlockEntity extends ChestBlockEntity implements MenuProvi
         }
     };
 
-    private final ItemStackHandler iconInventory = new ItemStackHandler(10) {
+    private final ItemStackHandler iconInventory = new ItemStackHandler(PAGE_COUNT) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
-            if (level != null && !level.isClientSide()) {
-                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-            }
+            syncToClient(SYNC_PAGE_ICONS);
         }
 
         @Override
@@ -51,8 +54,8 @@ public class SmartChestBlockEntity extends ChestBlockEntity implements MenuProvi
     };
 
     private int lastOpenedPage = 0;
+    private byte clientSyncMask = SYNC_ALL;
 
-    // --- Iron Chest風のアニメーション用フィールド ---
     public float lidAngle;
     public float oLidAngle;
     public int openCount;
@@ -70,7 +73,9 @@ public class SmartChestBlockEntity extends ChestBlockEntity implements MenuProvi
     }
 
     public ItemStack getPageIcon(int page) {
-        if (page < 0 || page >= 10) return ItemStack.EMPTY;
+        if (page < 0 || page >= PAGE_COUNT) {
+            return ItemStack.EMPTY;
+        }
         return this.iconInventory.getStackInSlot(page);
     }
 
@@ -79,22 +84,18 @@ public class SmartChestBlockEntity extends ChestBlockEntity implements MenuProvi
     }
 
     public void setLastOpenedPage(int page) {
-        if (page >= 0 && page < 10) {
+        if (page >= 0 && page < PAGE_COUNT) {
             this.lastOpenedPage = page;
             this.setChanged();
         }
     }
 
-    // --- クライアント側アニメーションティック（Iron Chest方式） ---
     public static void clientTick(Level level, BlockPos pos, BlockState state, SmartChestBlockEntity blockEntity) {
         blockEntity.oLidAngle = blockEntity.lidAngle;
         float speed = 0.1F;
 
-        if (blockEntity.openCount > 0 && blockEntity.lidAngle == 0.0F) {
-            level.playSound(null, pos, net.minecraft.sounds.SoundEvents.CHEST_OPEN, net.minecraft.sounds.SoundSource.BLOCKS, 0.5F, level.random.nextFloat() * 0.1F + 0.9F);
-        }
-
-        if ((blockEntity.openCount == 0 && blockEntity.lidAngle > 0.0F) || (blockEntity.openCount > 0 && blockEntity.lidAngle < 1.0F)) {
+        if ((blockEntity.openCount == 0 && blockEntity.lidAngle > 0.0F)
+                || (blockEntity.openCount > 0 && blockEntity.lidAngle < 1.0F)) {
             if (blockEntity.openCount > 0) {
                 blockEntity.lidAngle += speed;
                 if (blockEntity.lidAngle > 1.0F) {
@@ -104,47 +105,47 @@ public class SmartChestBlockEntity extends ChestBlockEntity implements MenuProvi
                 blockEntity.lidAngle -= speed;
                 if (blockEntity.lidAngle < 0.0F) {
                     blockEntity.lidAngle = 0.0F;
-                    level.playSound(null, pos, net.minecraft.sounds.SoundEvents.CHEST_CLOSE, net.minecraft.sounds.SoundSource.BLOCKS, 0.5F, level.random.nextFloat() * 0.1F + 0.9F);
                 }
             }
         }
     }
 
-    @Override
     public void startOpen(Player player) {
         if (!this.remove && !player.isSpectator()) {
             this.openCount++;
             this.setChanged();
-            if (level != null && !level.isClientSide()) {
-                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-            }
+            syncToClient(SYNC_OPEN_COUNT);
         }
     }
 
-    @Override
     public void stopOpen(Player player) {
         if (!this.remove && !player.isSpectator()) {
             this.openCount = Math.max(0, this.openCount - 1);
             this.setChanged();
-            if (level != null && !level.isClientSide()) {
-                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-            }
+            syncToClient(SYNC_OPEN_COUNT);
         }
     }
 
     public void dropAllContents() {
-        if (this.level != null && !this.level.isClientSide()) {
-            for (int i = 0; i < this.inventory.getSlots(); i++) {
-                ItemStack stack = this.inventory.getStackInSlot(i);
-                if (!stack.isEmpty()) {
-                    Containers.dropItemStack(this.level, this.worldPosition.getX(), this.worldPosition.getY(), this.worldPosition.getZ(), stack);
-                }
+        if (this.level == null || this.level.isClientSide()) {
+            return;
+        }
+
+        double x = this.worldPosition.getX() + 0.5D;
+        double y = this.worldPosition.getY() + 0.5D;
+        double z = this.worldPosition.getZ() + 0.5D;
+
+        for (int i = 0; i < this.inventory.getSlots(); i++) {
+            ItemStack stack = this.inventory.getStackInSlot(i);
+            if (!stack.isEmpty()) {
+                Containers.dropItemStack(this.level, x, y, z, stack);
             }
-            for (int i = 0; i < this.iconInventory.getSlots(); i++) {
-                ItemStack icon = this.iconInventory.getStackInSlot(i);
-                if (!icon.isEmpty()) {
-                    Containers.dropItemStack(this.level, this.worldPosition.getX(), this.worldPosition.getY(), this.worldPosition.getZ(), icon);
-                }
+        }
+
+        for (int i = 0; i < this.iconInventory.getSlots(); i++) {
+            ItemStack icon = this.iconInventory.getStackInSlot(i);
+            if (!icon.isEmpty()) {
+                Containers.dropItemStack(this.level, x, y, z, icon);
             }
         }
     }
@@ -176,6 +177,11 @@ public class SmartChestBlockEntity extends ChestBlockEntity implements MenuProvi
     }
 
     @Override
+    public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries) {
+        loadAdditional(tag, registries);
+    }
+
+    @Override
     public Component getDisplayName() {
         return Component.translatable("container.smartchest");
     }
@@ -188,8 +194,16 @@ public class SmartChestBlockEntity extends ChestBlockEntity implements MenuProvi
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
+        CompoundTag tag = new CompoundTag();
+        byte mask = this.clientSyncMask;
+        this.clientSyncMask = SYNC_ALL;
+
+        if ((mask & SYNC_OPEN_COUNT) != 0) {
+            tag.putInt("OpenCount", openCount);
+        }
+        if ((mask & SYNC_PAGE_ICONS) != 0) {
+            tag.put("PageIcons", iconInventory.serializeNBT(registries));
+        }
         return tag;
     }
 
@@ -197,5 +211,12 @@ public class SmartChestBlockEntity extends ChestBlockEntity implements MenuProvi
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    private void syncToClient(byte mask) {
+        if (this.level != null && !this.level.isClientSide()) {
+            this.clientSyncMask = mask;
+            this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
+        }
     }
 }

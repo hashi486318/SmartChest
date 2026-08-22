@@ -25,11 +25,7 @@ public record SortRequestPacket() implements CustomPacketPayload {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player && player.containerMenu instanceof SmartChestMenu menu) {
                 if (menu.getBlockEntity() != null) {
-                    // 現在開いているページ番号を取得して、そのページ内のみをソート
-                    int currentPage = menu.getCurrentPage();
-                    SmartChestSort.sortPage(menu.getBlockEntity().getInventory(), currentPage);
-
-                    // クライアントへ同期
+                    SmartChestSort.sortPage(menu.getBlockEntity().getInventory(), menu.getCurrentPage());
                     menu.broadcastChanges();
                 }
             }

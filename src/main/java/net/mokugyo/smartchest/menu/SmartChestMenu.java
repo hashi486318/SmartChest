@@ -3,6 +3,7 @@ package net.mokugyo.smartchest.menu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -10,19 +11,20 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.mokugyo.smartchest.blockentity.SmartChestBlockEntity;
 import net.mokugyo.smartchest.registry.ModMenus;
-import net.neoforged.neoforge.items.SlotItemHandler;
-import net.minecraft.world.SimpleContainer;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class SmartChestMenu extends AbstractContainerMenu {
 
+    private static final int CHEST_SLOT_COUNT = SmartChestBlockEntity.PAGE_SIZE;
+    private static final int ICON_SLOT_INDEX = CHEST_SLOT_COUNT;
+    private static final int PLAYER_INVENTORY_START = ICON_SLOT_INDEX + 1;
+
     private final SmartChestBlockEntity blockEntity;
     private final List<SmartChestSlot> chestSlots = new ArrayList<>();
     private SmartChestSlot iconSlot;
     private int currentPage = 0;
-    private String filterQuery = "";
 
     public SmartChestMenu(int containerId, Inventory playerInventory, SmartChestBlockEntity blockEntity) {
         super(ModMenus.SMART_CHEST_MENU.get(), containerId);
@@ -33,21 +35,10 @@ public class SmartChestMenu extends AbstractContainerMenu {
         }
 
         setupSlots(playerInventory);
-
-        // ★ ここにあった手動の blockEntity.startOpen(...) は削除しました。
-        // （Minecraftの openMenu システムが自動的に開始カウントを管理するため不要です）
     }
 
     public SmartChestBlockEntity getBlockEntity() {
         return this.blockEntity;
-    }
-
-    public boolean isFiltering() {
-        return this.filterQuery != null && !this.filterQuery.isBlank();
-    }
-
-    public void setFilterQuery(String query) {
-        this.filterQuery = query;
     }
 
     private void setupSlots(Inventory playerInventory) {
@@ -57,27 +48,22 @@ public class SmartChestMenu extends AbstractContainerMenu {
         if (blockEntity != null) {
             var handler = blockEntity.getInventory();
 
-            // 0～53: メインチェストスロット (9x6)
+            // Slots 0-53: main chest grid (9x6)
             for (int row = 0; row < 6; ++row) {
                 for (int col = 0; col < 9; ++col) {
                     int slotIndex = col + row * 9;
-                    SmartChestSlot slot = new SmartChestSlot(this, handler, slotIndex, 8 + col * 18, 18 + row * 18);
+                    SmartChestSlot slot = new SmartChestSlot(handler, slotIndex, 8 + col * 18, 18 + row * 18);
                     this.chestSlots.add(slot);
                     this.addSlot(slot);
                 }
             }
 
-            // 54番スロット（アイコン専用）
-            this.iconSlot = new SmartChestSlot(this, blockEntity.getIconInventory(), currentPage, 178, -2) {
-                @Override
-                public int getMaxStackSize() { return 1; }
-                @Override
-                public int getMaxStackSize(ItemStack stack) { return 1; }
-            };
+            // Slot 54: page icon
+            this.iconSlot = new SmartChestSlot(blockEntity.getIconInventory(), currentPage, 178, -2);
             this.addSlot(this.iconSlot);
         }
 
-        // プレイヤーインベントリ (3x9 + ホットバー9)
+        // Player inventory (3x9 + hotbar)
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
                 this.addSlot(new Slot(playerInventory, col + row * 9 + 9, 8 + col * 18, 140 + row * 18));
@@ -92,7 +78,9 @@ public class SmartChestMenu extends AbstractContainerMenu {
     }
 
     public void setPage(int page) {
-        if (page < 0 || page >= 10) return;
+        if (page < 0 || page >= SmartChestBlockEntity.PAGE_COUNT) {
+            return;
+        }
         this.currentPage = page;
 
         if (this.blockEntity != null) {
@@ -107,17 +95,20 @@ public class SmartChestMenu extends AbstractContainerMenu {
     }
 
     private void updateSlotIndices() {
-        if (blockEntity == null) return;
-        int startIndex = currentPage * 54;
+        if (blockEntity == null) {
+            return;
+        }
 
-        for (int i = 0; i < 54; i++) {
+        int startIndex = currentPage * CHEST_SLOT_COUNT;
+
+        for (int i = 0; i < CHEST_SLOT_COUNT; i++) {
             if (i < this.chestSlots.size()) {
-                this.chestSlots.get(i).setTargetIndex(startIndex + i, true);
+                this.chestSlots.get(i).setTargetIndex(startIndex + i);
             }
         }
 
         if (this.iconSlot != null) {
-            this.iconSlot.setTargetIndex(currentPage, true);
+            this.iconSlot.setTargetIndex(currentPage);
         }
 
         this.broadcastChanges();
@@ -132,21 +123,12 @@ public class SmartChestMenu extends AbstractContainerMenu {
             ItemStack slotStack = slot.getItem();
             itemstack = slotStack.copy();
 
-            if (index < 54) {
-                if (!this.moveItemStackTo(slotStack, 55, this.slots.size(), true)) {
+            if (index <= ICON_SLOT_INDEX) {
+                if (!this.moveItemStackTo(slotStack, PLAYER_INVENTORY_START, this.slots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (index == 54) {
-                if (!this.moveItemStackTo(slotStack, 55, this.slots.size(), true)) {
-                    return ItemStack.EMPTY;
-                }
-            } else {
-                if (this.isFiltering()) {
-                    return ItemStack.EMPTY;
-                }
-                if (!this.moveItemStackTo(slotStack, 0, 54, false)) {
-                    return ItemStack.EMPTY;
-                }
+            } else if (!this.moveItemStackTo(slotStack, 0, ICON_SLOT_INDEX, false)) {
+                return ItemStack.EMPTY;
             }
 
             if (slotStack.isEmpty()) {
@@ -161,8 +143,6 @@ public class SmartChestMenu extends AbstractContainerMenu {
     @Override
     public void removed(Player player) {
         super.removed(player);
-        // ★ バニラのChestBlockEntityは親クラスのクローズ処理で管理されますが、
-        // もし必要であればここで安全に stopOpen を呼び出します（サーバー側のみ）
         if (blockEntity != null && blockEntity.getLevel() != null && !blockEntity.getLevel().isClientSide()) {
             blockEntity.stopOpen(player);
             BlockPos pos = blockEntity.getBlockPos();
@@ -179,6 +159,7 @@ public class SmartChestMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return true;
+        return blockEntity != null && !blockEntity.isRemoved()
+                && Container.stillValidBlockEntity(blockEntity, player);
     }
 }

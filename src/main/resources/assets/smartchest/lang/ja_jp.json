@@ -1,6 +1,5 @@
 {
     "block.smartchest.smart_chest": "スマートチェスト",
-    "itemGroup.smartchest": "SmartChest",
     "container.smartchest": "スマートチェスト",
     "creativetab.smartchest.tab": "Smart Chest",
     "message.smartchest.confirm_destroy": "§e[SmartChest] 本当に破壊しますか？ 5秒以内にもう一度「素手＋シフト右クリック」で破壊します。",

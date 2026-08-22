@@ -1,79 +1,74 @@
 package net.mokugyo.smartchest.util;
 
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.ItemStack;
+import net.mokugyo.smartchest.blockentity.SmartChestBlockEntity;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class SmartChestSort {
+public final class SmartChestSort {
 
-    /**
-     * 指定されたページ（54スロット分）のみを有名Mod風のルールで並べ替える
-     */
+    private SmartChestSort() {}
+
     public static void sortPage(IItemHandlerModifiable inventory, int page) {
-        int startSlot = page * 54;
-        int slotCount = 54;
+        int startSlot = page * SmartChestBlockEntity.PAGE_SIZE;
+        int slotCount = SmartChestBlockEntity.PAGE_SIZE;
 
-        List<ItemStack> items = new ArrayList<>();
+        List<ItemStack> items = new ArrayList<>(slotCount);
 
-        // 1. 指定ページのアイテムを収集してクリア
         for (int i = 0; i < slotCount; i++) {
-            int slot = startSlot + i;
-            ItemStack stack = inventory.getStackInSlot(slot);
+            ItemStack stack = inventory.getStackInSlot(startSlot + i);
             if (!stack.isEmpty()) {
                 items.add(stack.copy());
-                inventory.setStackInSlot(slot, ItemStack.EMPTY);
+                inventory.setStackInSlot(startSlot + i, ItemStack.EMPTY);
             }
         }
 
-        // 2. スタックの結合（同じアイテムを同一スタックにまとめる）
-        List<ItemStack> merged = new ArrayList<>();
+        List<ItemStack> merged = mergeStacks(items);
+
+        merged.sort(
+                Comparator.comparing((ItemStack stack) -> stack.getItem().builtInRegistryHolder().key().location().getNamespace())
+                        .thenComparing(stack -> stack.getItem().builtInRegistryHolder().key().location().getPath())
+                        .thenComparing(stack -> {
+                            var name = stack.get(DataComponents.CUSTOM_NAME);
+                            return name != null ? name.getString() : "";
+                        })
+                        .thenComparing(stack -> stack.getOrDefault(DataComponents.DAMAGE, 0))
+                        .thenComparing(stack -> stack.has(DataComponents.ENCHANTMENTS) ? 0 : 1)
+                        .thenComparing(stack -> -stack.getCount())
+        );
+
+        for (int i = 0; i < merged.size() && i < slotCount; i++) {
+            inventory.setStackInSlot(startSlot + i, merged.get(i));
+        }
+    }
+
+    private static List<ItemStack> mergeStacks(List<ItemStack> items) {
+        List<ItemStack> merged = new ArrayList<>(items.size());
+
+        outer:
         for (ItemStack stack : items) {
-            boolean added = false;
             for (ItemStack existing : merged) {
                 if (ItemStack.isSameItemSameComponents(existing, stack)) {
-                    int maxCount = existing.getMaxStackSize();
-                    int space = maxCount - existing.getCount();
+                    int space = existing.getMaxStackSize() - existing.getCount();
                     if (space > 0) {
                         int transfer = Math.min(space, stack.getCount());
                         existing.grow(transfer);
                         stack.shrink(transfer);
                         if (stack.isEmpty()) {
-                            added = true;
-                            break;
+                            continue outer;
                         }
                     }
                 }
             }
-            if (!added && !stack.isEmpty()) {
+            if (!stack.isEmpty()) {
                 merged.add(stack);
             }
         }
 
-        // 3. 有名Mod風の多段階ソートロジック
-        merged.sort(
-                // ① Mod ID順
-                Comparator.comparing((ItemStack s) -> s.getItem().builtInRegistryHolder().key().location().getNamespace())
-                        // ② アイテムのレジストリ名（パス）順
-                        .thenComparing(s -> s.getItem().builtInRegistryHolder().key().location().getPath())
-                        // ③ カスタム名（金床などで付けられた名前）
-                        .thenComparing(s -> {
-                            var name = s.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME);
-                            return name != null ? name.getString() : "";
-                        })
-                        // ④ ダメージ値（耐久値の減り具合）- コンポーネント経由で安全に取得
-                        .thenComparing(s -> s.getOrDefault(net.minecraft.core.component.DataComponents.DAMAGE, 0))
-                        // ⑤ エンチャントの有無（エンチャント付きかどうか）
-                        .thenComparing(s -> s.has(net.minecraft.core.component.DataComponents.ENCHANTMENTS) ? 0 : 1)
-                        // ⑥ 最後にスタック数が多い順
-                        .thenComparing(s -> -s.getCount())
-        );
-
-        // 4. ページ内のスロットへ綺麗に詰め直す
-        for (int i = 0; i < merged.size() && i < slotCount; i++) {
-            inventory.setStackInSlot(startSlot + i, merged.get(i));
-        }
+        return merged;
     }
 }

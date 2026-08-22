@@ -20,13 +20,10 @@ public class SmartChestModel {
 
     private final ModelPart bottom;
     private final ModelPart lid;
-    private final ModelPart lock;
 
     public SmartChestModel(ModelPart root) {
         this.bottom = root.getChild("bottom");
         this.lid = root.getChild("lid");
-        // lid の子要素としてロックを取得するように修正
-        this.lock = this.lid.getChild("lock");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -41,7 +38,6 @@ public class SmartChestModel {
                 PartPose.ZERO
         );
 
-        // lid を変数として受け取り、その中に lock を追加する
         PartDefinition lid = root.addOrReplaceChild(
                 "lid",
                 CubeListBuilder.create()
@@ -50,12 +46,10 @@ public class SmartChestModel {
                 PartPose.offset(0.0F, 9.0F, 0.0F)
         );
 
-        // lock を lid の子として追加
         lid.addOrReplaceChild(
                 "lock",
                 CubeListBuilder.create()
                         .texOffs(0, 0)
-                        // addBoxの引数: x, y, z, sizeX, sizeY, sizeZ
                         .addBox(7.0F, -2.0F, 15.0F, 2.0F, 4.0F, 1.0F),
                 PartPose.offset(0.0F, 0.0F, 0.0F)
         );
@@ -65,5 +59,4 @@ public class SmartChestModel {
 
     public ModelPart bottom() { return bottom; }
     public ModelPart lid() { return lid; }
-    public ModelPart lock() { return lock; }
 }

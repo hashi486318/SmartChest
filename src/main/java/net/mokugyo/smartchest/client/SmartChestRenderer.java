@@ -9,23 +9,11 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.mokugyo.smartchest.SmartChest;
+import net.mokugyo.smartchest.block.SmartChestBlock;
 import net.mokugyo.smartchest.blockentity.SmartChestBlockEntity;
 
-/**
- * SmartChest専用の描画クラス。
- *
- * バニラのChestRendererと違い、
- * ・double chest対応なし（SmartChestはシングル固定のため）
- * ・テクスチャアトラス（entity/chestアトラス）は使わず、直接1枚のPNGを描画
- *   → assets/smartchest/textures/entity/smart_chest.png をそのままバインドするだけなので、
- *     アトラス用のsprite source jsonを別途用意する必要がない（バニラより単純な構成）。
- *
- * 蓋の開閉は SmartChestBlockEntity が ChestBlockEntity を継承しているため、
- * 標準の getOpenNess(partialTick) がそのまま使える。
- */
 public class SmartChestRenderer implements BlockEntityRenderer<SmartChestBlockEntity> {
 
     private static final ResourceLocation TEXTURE =
@@ -46,30 +34,24 @@ public class SmartChestRenderer implements BlockEntityRenderer<SmartChestBlockEn
                        int packedOverlay) {
 
         BlockState state = blockEntity.getBlockState();
-        Direction facing = state.hasProperty(ChestBlock.FACING)
-                ? state.getValue(ChestBlock.FACING)
+        Direction facing = state.hasProperty(SmartChestBlock.FACING)
+                ? state.getValue(SmartChestBlock.FACING)
                 : Direction.NORTH;
 
         poseStack.pushPose();
 
-        // ブロックの向きに合わせてモデルを回転
+        // Rotate model based on block facing
         poseStack.translate(0.5F, 0.5F, 0.5F);
         poseStack.mulPose(Axis.YP.rotationDegrees(-facing.toYRot()));
         poseStack.translate(-0.5F, -0.5F, -0.5F);
 
-        // SmartChestRenderer.java の render メソッド内
-
-        // 蓋の開閉度合い（0.0 〜 1.0）を滑らかに補間
+        // Smoothly interpolate lid angle with cubic easing
         float openNess = blockEntity.oLidAngle + (blockEntity.lidAngle - blockEntity.oLidAngle) * partialTick;
-        // 立方イージング（お好みで調整可能）
         openNess = 1.0F - openNess;
         openNess = 1.0F - openNess * openNess * openNess;
-
-        // 0〜90度（ラジアン）
         model.lid().xRot = -(openNess * 1.5707964F);
 
         VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.entityCutout(TEXTURE));
-
         model.bottom().render(poseStack, vertexConsumer, packedLight, packedOverlay);
         model.lid().render(poseStack, vertexConsumer, packedLight, packedOverlay);
 
