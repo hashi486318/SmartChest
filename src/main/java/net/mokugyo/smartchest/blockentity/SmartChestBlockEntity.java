@@ -133,14 +133,16 @@ public class SmartChestBlockEntity extends BlockEntity implements MenuProvider {
         for (int i = 0; i < this.inventory.getSlots(); i++) {
             ItemStack stack = this.inventory.getStackInSlot(i);
             if (!stack.isEmpty()) {
-                Containers.dropItemStack(this.level, x, y, z, stack);
+                Containers.dropItemStack(this.level, x, y, z, stack.copy());
+                this.inventory.setStackInSlot(i, ItemStack.EMPTY);
             }
         }
 
         for (int i = 0; i < this.iconInventory.getSlots(); i++) {
             ItemStack icon = this.iconInventory.getStackInSlot(i);
             if (!icon.isEmpty()) {
-                Containers.dropItemStack(this.level, x, y, z, icon);
+                Containers.dropItemStack(this.level, x, y, z, icon.copy());
+                this.iconInventory.setStackInSlot(i, ItemStack.EMPTY);
             }
         }
     }
@@ -151,7 +153,6 @@ public class SmartChestBlockEntity extends BlockEntity implements MenuProvider {
         tag.put("Inventory", inventory.serializeNBT(registries));
         tag.put("PageIcons", iconInventory.serializeNBT(registries));
         tag.putInt("LastOpenedPage", lastOpenedPage);
-        tag.putInt("OpenCount", openCount);
     }
 
     @Override
@@ -166,8 +167,17 @@ public class SmartChestBlockEntity extends BlockEntity implements MenuProvider {
         if (tag.contains("LastOpenedPage", Tag.TAG_INT)) {
             this.lastOpenedPage = tag.getInt("LastOpenedPage");
         }
+        // Client update packets go through loadAdditional, not handleUpdateTag.
         if (tag.contains("OpenCount", Tag.TAG_INT)) {
             this.openCount = tag.getInt("OpenCount");
+        }
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (this.level != null && !this.level.isClientSide()) {
+            this.openCount = 0;
         }
     }
 

@@ -25,6 +25,7 @@ public class SmartChestScreen extends AbstractContainerScreen<SmartChestMenu> {
     private int iconBorderY;
     private final int[] tabIconX = new int[SmartChestBlockEntity.PAGE_COUNT];
     private final int[] tabIconY = new int[SmartChestBlockEntity.PAGE_COUNT];
+    private final Button[] tabButtons = new Button[SmartChestBlockEntity.PAGE_COUNT];
 
     public SmartChestScreen(SmartChestMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -51,7 +52,7 @@ public class SmartChestScreen extends AbstractContainerScreen<SmartChestMenu> {
         // Left tabs (Pages 0-4)
         for (int i = 0; i < 5; i++) {
             final int page = i;
-            this.addRenderableWidget(
+            this.tabButtons[page] = this.addRenderableWidget(
                     Button.builder(CommonComponents.EMPTY, b -> handleTabClick(page))
                             .bounds(x - 22, y + 18 + (i * 22), 20, 20)
                             .build()
@@ -61,11 +62,16 @@ public class SmartChestScreen extends AbstractContainerScreen<SmartChestMenu> {
         // Right tabs (Pages 5-9)
         for (int i = 0; i < 5; i++) {
             final int page = i + 5;
-            this.addRenderableWidget(
+            this.tabButtons[page] = this.addRenderableWidget(
                     Button.builder(CommonComponents.EMPTY, b -> handleTabClick(page))
                             .bounds(x + this.imageWidth + 2, y + 18 + (i * 22), 20, 20)
                             .build()
             );
+        }
+
+        int currentPage = this.menu.getCurrentPage();
+        if (currentPage >= 0 && currentPage < this.tabButtons.length && this.tabButtons[currentPage] != null) {
+            this.setInitialFocus(this.tabButtons[currentPage]);
         }
 
         Slot iconSlot = this.menu.getSlot(SmartChestBlockEntity.PAGE_SIZE);

@@ -135,7 +135,7 @@ public class SmartChestBlock extends BaseEntityBlock implements SimpleWaterlogge
                     level.destroyBlock(pos, true, player);
                 } else {
                     confirmTimers.put(playerUUID, new ClickInfo(pos, currentTime));
-                    player.sendSystemMessage(Component.translatable("message.smartchest.confirm_destroy"));
+                    player.displayClientMessage(Component.translatable("message.smartchest.confirm_destroy"), true);
                 }
 
                 confirmTimers.entrySet().removeIf(entry -> currentTime - entry.getValue().time() >= CONFIRM_DESTROY_TICKS);
@@ -159,7 +159,10 @@ public class SmartChestBlock extends BaseEntityBlock implements SimpleWaterlogge
                         level.random.nextFloat() * 0.1F + 0.9F
                 );
                 smartChest.startOpen(player);
-                serverPlayer.openMenu(smartChest, pos);
+                serverPlayer.openMenu(smartChest, buf -> {
+                    buf.writeBlockPos(pos);
+                    buf.writeVarInt(smartChest.getLastOpenedPage());
+                });
             }
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide);

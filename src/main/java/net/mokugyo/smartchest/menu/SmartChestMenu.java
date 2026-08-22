@@ -27,13 +27,18 @@ public class SmartChestMenu extends AbstractContainerMenu {
     private int currentPage = 0;
 
     public SmartChestMenu(int containerId, Inventory playerInventory, SmartChestBlockEntity blockEntity) {
+        this(containerId, playerInventory, blockEntity,
+                blockEntity != null ? blockEntity.getLastOpenedPage() : 0);
+    }
+
+    public SmartChestMenu(int containerId, Inventory playerInventory, SmartChestBlockEntity blockEntity, int initialPage) {
         super(ModMenus.SMART_CHEST_MENU.get(), containerId);
         this.blockEntity = blockEntity;
-
-        if (blockEntity != null) {
+        if (initialPage >= 0 && initialPage < SmartChestBlockEntity.PAGE_COUNT) {
+            this.currentPage = initialPage;
+        } else if (blockEntity != null) {
             this.currentPage = blockEntity.getLastOpenedPage();
         }
-
         setupSlots(playerInventory);
     }
 

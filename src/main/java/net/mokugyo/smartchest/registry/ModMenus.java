@@ -21,7 +21,8 @@ public class ModMenus {
                         var level = inv.player.level();
 
                         if (level.getBlockEntity(pos) instanceof SmartChestBlockEntity chest) {
-                            return new SmartChestMenu(containerId, inv, chest);
+                            int page = data.readVarInt();
+                            return new SmartChestMenu(containerId, inv, chest, page);
                         }
                         return null;
                     }));
