@@ -11,6 +11,16 @@ import java.util.List;
 
 public final class SmartChestSort {
 
+    private record SortKey(ItemStack stack, String namespace, String path, String customName, int damage, int unenchanted, int negCount) {}
+
+    private static final Comparator<SortKey> SORT_ORDER = Comparator
+            .comparing(SortKey::namespace)
+            .thenComparing(SortKey::path)
+            .thenComparing(SortKey::customName)
+            .thenComparingInt(SortKey::damage)
+            .thenComparingInt(SortKey::unenchanted)
+            .thenComparingInt(SortKey::negCount);
+
     private SmartChestSort() {}
 
     public static void sortPage(IItemHandlerModifiable inventory, int page) {
@@ -28,21 +38,24 @@ public final class SmartChestSort {
         }
 
         List<ItemStack> merged = mergeStacks(items);
+        List<SortKey> keyed = new ArrayList<>(merged.size());
+        for (ItemStack stack : merged) {
+            var location = stack.getItem().builtInRegistryHolder().key().location();
+            var name = stack.get(DataComponents.CUSTOM_NAME);
+            keyed.add(new SortKey(
+                    stack,
+                    location.getNamespace(),
+                    location.getPath(),
+                    name != null ? name.getString() : "",
+                    stack.getOrDefault(DataComponents.DAMAGE, 0),
+                    stack.has(DataComponents.ENCHANTMENTS) ? 0 : 1,
+                    -stack.getCount()
+            ));
+        }
+        keyed.sort(SORT_ORDER);
 
-        merged.sort(
-                Comparator.comparing((ItemStack stack) -> stack.getItem().builtInRegistryHolder().key().location().getNamespace())
-                        .thenComparing(stack -> stack.getItem().builtInRegistryHolder().key().location().getPath())
-                        .thenComparing(stack -> {
-                            var name = stack.get(DataComponents.CUSTOM_NAME);
-                            return name != null ? name.getString() : "";
-                        })
-                        .thenComparing(stack -> stack.getOrDefault(DataComponents.DAMAGE, 0))
-                        .thenComparing(stack -> stack.has(DataComponents.ENCHANTMENTS) ? 0 : 1)
-                        .thenComparing(stack -> -stack.getCount())
-        );
-
-        for (int i = 0; i < merged.size() && i < slotCount; i++) {
-            inventory.setStackInSlot(startSlot + i, merged.get(i));
+        for (int i = 0; i < keyed.size() && i < slotCount; i++) {
+            inventory.setStackInSlot(startSlot + i, keyed.get(i).stack());
         }
     }
 

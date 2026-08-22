@@ -12,6 +12,11 @@ import net.mokugyo.smartchest.registry.ModBlocks;
 
 public class SmartChestItemStackRenderer extends BlockEntityWithoutLevelRenderer {
 
+    private final SmartChestBlockEntity dummyChest = new SmartChestBlockEntity(
+            BlockPos.ZERO,
+            ModBlocks.SMART_CHEST_BLOCK.get().defaultBlockState()
+    );
+
     public SmartChestItemStackRenderer() {
         super(
                 Minecraft.getInstance().getBlockEntityRenderDispatcher(),
@@ -33,13 +38,8 @@ public class SmartChestItemStackRenderer extends BlockEntityWithoutLevelRenderer
         poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180.0F));
         poseStack.translate(-0.5F, -0.5F, -0.5F);
 
-        SmartChestBlockEntity blockEntity = new SmartChestBlockEntity(
-                BlockPos.ZERO,
-                ModBlocks.SMART_CHEST_BLOCK.get().defaultBlockState()
-        );
-
         Minecraft.getInstance().getBlockEntityRenderDispatcher()
-                .renderItem(blockEntity, poseStack, buffer, packedLight, packedOverlay);
+                .renderItem(this.dummyChest, poseStack, buffer, packedLight, packedOverlay);
         poseStack.popPose();
     }
 }

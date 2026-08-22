@@ -102,9 +102,7 @@ public class SmartChestMenu extends AbstractContainerMenu {
         int startIndex = currentPage * CHEST_SLOT_COUNT;
 
         for (int i = 0; i < CHEST_SLOT_COUNT; i++) {
-            if (i < this.chestSlots.size()) {
-                this.chestSlots.get(i).setTargetIndex(startIndex + i);
-            }
+            this.chestSlots.get(i).setTargetIndex(startIndex + i);
         }
 
         if (this.iconSlot != null) {

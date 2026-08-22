@@ -91,22 +91,17 @@ public class SmartChestBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public static void clientTick(Level level, BlockPos pos, BlockState state, SmartChestBlockEntity blockEntity) {
-        blockEntity.oLidAngle = blockEntity.lidAngle;
-        float speed = 0.1F;
+        if ((blockEntity.openCount == 0 && blockEntity.lidAngle == 0.0F)
+                || (blockEntity.openCount > 0 && blockEntity.lidAngle == 1.0F)) {
+            blockEntity.oLidAngle = blockEntity.lidAngle;
+            return;
+        }
 
-        if ((blockEntity.openCount == 0 && blockEntity.lidAngle > 0.0F)
-                || (blockEntity.openCount > 0 && blockEntity.lidAngle < 1.0F)) {
-            if (blockEntity.openCount > 0) {
-                blockEntity.lidAngle += speed;
-                if (blockEntity.lidAngle > 1.0F) {
-                    blockEntity.lidAngle = 1.0F;
-                }
-            } else {
-                blockEntity.lidAngle -= speed;
-                if (blockEntity.lidAngle < 0.0F) {
-                    blockEntity.lidAngle = 0.0F;
-                }
-            }
+        blockEntity.oLidAngle = blockEntity.lidAngle;
+        if (blockEntity.openCount > 0) {
+            blockEntity.lidAngle = Math.min(1.0F, blockEntity.lidAngle + 0.1F);
+        } else {
+            blockEntity.lidAngle = Math.max(0.0F, blockEntity.lidAngle - 0.1F);
         }
     }
 

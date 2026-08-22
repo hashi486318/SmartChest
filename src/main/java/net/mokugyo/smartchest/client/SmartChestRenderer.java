@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.state.BlockState;
 import net.mokugyo.smartchest.SmartChest;
 import net.mokugyo.smartchest.block.SmartChestBlock;
 import net.mokugyo.smartchest.blockentity.SmartChestBlockEntity;
@@ -33,10 +32,7 @@ public class SmartChestRenderer implements BlockEntityRenderer<SmartChestBlockEn
                        int packedLight,
                        int packedOverlay) {
 
-        BlockState state = blockEntity.getBlockState();
-        Direction facing = state.hasProperty(SmartChestBlock.FACING)
-                ? state.getValue(SmartChestBlock.FACING)
-                : Direction.NORTH;
+        Direction facing = blockEntity.getBlockState().getValue(SmartChestBlock.FACING);
 
         poseStack.pushPose();
 

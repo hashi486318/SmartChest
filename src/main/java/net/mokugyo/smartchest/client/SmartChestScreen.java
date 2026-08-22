@@ -21,6 +21,11 @@ public class SmartChestScreen extends AbstractContainerScreen<SmartChestMenu> {
     private static final ResourceLocation CONTAINER_BACKGROUND =
             ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png");
 
+    private int iconBorderX;
+    private int iconBorderY;
+    private final int[] tabIconX = new int[SmartChestBlockEntity.PAGE_COUNT];
+    private final int[] tabIconY = new int[SmartChestBlockEntity.PAGE_COUNT];
+
     public SmartChestScreen(SmartChestMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
         this.imageWidth = 176;
@@ -62,6 +67,14 @@ public class SmartChestScreen extends AbstractContainerScreen<SmartChestMenu> {
                             .build()
             );
         }
+
+        Slot iconSlot = this.menu.getSlot(SmartChestBlockEntity.PAGE_SIZE);
+        this.iconBorderX = this.leftPos + iconSlot.x - 1;
+        this.iconBorderY = this.topPos + iconSlot.y - 1;
+        for (int i = 0; i < SmartChestBlockEntity.PAGE_COUNT; i++) {
+            this.tabIconX[i] = (i < 5) ? (x - 20) : (x + this.imageWidth + 4);
+            this.tabIconY[i] = y + 20 + ((i % 5) * 22);
+        }
     }
 
     private void handleTabClick(int page) {
@@ -79,23 +92,14 @@ public class SmartChestScreen extends AbstractContainerScreen<SmartChestMenu> {
         int y = (this.height - this.imageHeight) / 2;
         guiGraphics.blit(CONTAINER_BACKGROUND, x, y, 0, 0, this.imageWidth, this.imageHeight);
 
-        // Draw icon slot border
-        Slot iconSlot = this.menu.getSlot(SmartChestBlockEntity.PAGE_SIZE);
-        if (iconSlot != null) {
-            int sx = this.leftPos + iconSlot.x - 1;
-            int sy = this.topPos + iconSlot.y - 1;
-            guiGraphics.fill(sx, sy, sx + 18, sy + 18, 0xFF373737);
-            guiGraphics.fill(sx + 1, sy + 1, sx + 17, sy + 17, 0xFF8B8B8B);
-        }
+        guiGraphics.fill(this.iconBorderX, this.iconBorderY, this.iconBorderX + 18, this.iconBorderY + 18, 0xFF373737);
+        guiGraphics.fill(this.iconBorderX + 1, this.iconBorderY + 1, this.iconBorderX + 17, this.iconBorderY + 17, 0xFF8B8B8B);
 
-        // Draw tab icons for all pages
         if (this.menu.getBlockEntity() != null) {
             for (int i = 0; i < SmartChestBlockEntity.PAGE_COUNT; i++) {
                 ItemStack icon = this.menu.getBlockEntity().getPageIcon(i);
                 if (!icon.isEmpty()) {
-                    int bx = (i < 5) ? (x - 20) : (x + this.imageWidth + 4);
-                    int by = y + 20 + ((i % 5) * 22);
-                    guiGraphics.renderItem(icon, bx, by);
+                    guiGraphics.renderItem(icon, this.tabIconX[i], this.tabIconY[i]);
                 }
             }
         }
