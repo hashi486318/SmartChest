@@ -1,0 +1,7 @@
+{
+    "block.smartchest.smart_chest": "Smart Chest",
+    "container.smartchest": "Smart Chest",
+    "creativetab.smartchest.tab": "Smart Chest",
+    "message.smartchest.confirm_destroy": "§e[SmartChest] Are you sure you want to destroy this? Shift + Right-click again within 5 seconds to confirm.",
+    "message.smartchest.destroyed": "§c[SmartChest] Smart Chest was destroyed."
+}

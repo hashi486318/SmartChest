@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "TOT",
+    "BCB",
+    "PSP"
+  ],
+  "key": {
+    "T": {
+      "item": "minecraft:redstone_torch"
+    },
+    "O": {
+      "item": "minecraft:observer"
+    },
+    "B": {
+      "item": "minecraft:book"
+    },
+    "C": {
+      "item": "minecraft:trapped_chest"
+    },
+    "P": {
+      "item": "minecraft:comparator"
+    },
+    "S": {
+      "item": "minecraft:lectern"
+    }
+  },
+  "result": {
+    "item": "smartchest:smart_chest",
+    "count": 1
+  }
+}

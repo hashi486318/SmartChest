@@ -1,0 +1,5 @@
+{
+    "variants": {
+        "": { "model": "smartchest:block/smart_chest" }
+    }
+}
