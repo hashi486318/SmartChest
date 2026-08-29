@@ -60,6 +60,16 @@ rather than:
 
 > Machine → SmartChest
 
+### Durability
+
+SmartChest is designed to be sturdy while still behaving like a wooden storage block.
+
+- Axe is the preferred tool
+- Can still be broken without the preferred tool
+- High resistance to explosions
+
+SmartChest is intended to survive common accidental explosions while remaining destructible by powerful explosions.
+
 ### Portability
 
 SmartChest is intended to behave as a chest, allowing it to work with mods that provide chest-carrying functionality.
@@ -88,10 +98,11 @@ The result is intended to feel like a small mechanical contraption that can be b
 ## Recipe
 
 ```text
-Redstone Torch | Redstone | Redstone Torch
+Redstone Torch | Redstone      | Redstone Torch
 Book           | Trapped Chest | Book
 Repeater       | Lectern       | Repeater
 ```
+
 ## License
 
 SmartChest is licensed under the [MIT License](LICENSE).

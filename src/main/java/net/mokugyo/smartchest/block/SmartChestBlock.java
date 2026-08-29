@@ -123,26 +123,6 @@ public class SmartChestBlock extends BaseEntityBlock implements SimpleWaterlogge
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
-        if (stack.isEmpty() && player.isShiftKeyDown()) {
-            if (!level.isClientSide()) {
-                UUID playerUUID = player.getUUID();
-                long currentTime = level.getGameTime();
-                ClickInfo lastClick = confirmTimers.get(playerUUID);
-
-                if (lastClick != null && lastClick.pos().equals(pos) && (currentTime - lastClick.time() < CONFIRM_DESTROY_TICKS)) {
-                    confirmTimers.remove(playerUUID);
-                    player.displayClientMessage(Component.translatable("message.smartchest.destroyed"), true);
-                    level.destroyBlock(pos, true, player);
-                } else {
-                    confirmTimers.put(playerUUID, new ClickInfo(pos, currentTime));
-                    player.displayClientMessage(Component.translatable("message.smartchest.confirm_destroy"), true);
-                }
-
-                confirmTimers.entrySet().removeIf(entry -> currentTime - entry.getValue().time() >= CONFIRM_DESTROY_TICKS);
-            }
-            return ItemInteractionResult.SUCCESS;
-        }
-
         if (!level.isClientSide()) {
             if (isBlocked(level, pos)) {
                 return ItemInteractionResult.CONSUME;
