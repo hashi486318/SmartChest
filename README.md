@@ -10,9 +10,9 @@ It provides a compact and organized way to manage a large number of items while 
 
 ## Requirements
 
-- Minecraft 1.21.1
-- NeoForge
-- Java 21
+- Minecraft 1.20.1
+- Forge
+- Java 17
 
 ## Features
 
