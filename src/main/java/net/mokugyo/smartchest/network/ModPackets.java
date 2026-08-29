@@ -13,11 +13,5 @@ public class ModPackets {
                 ChangePagePacket.STREAM_CODEC,
                 ChangePagePacket::handle
         );
-
-        registrar.playToServer(
-                SortRequestPacket.TYPE,
-                SortRequestPacket.STREAM_CODEC,
-                SortRequestPacket::handle
-        );
     }
 }

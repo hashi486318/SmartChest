@@ -10,7 +10,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.mokugyo.smartchest.network.SortRequestPacket;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.mokugyo.smartchest.blockentity.SmartChestBlockEntity;
 import net.mokugyo.smartchest.menu.SmartChestMenu;
@@ -40,14 +39,6 @@ public class SmartChestScreen extends AbstractContainerScreen<SmartChestMenu> {
 
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
-
-        // Sort button
-        this.addRenderableWidget(
-                Button.builder(Component.literal("≡"), b ->
-                        PacketDistributor.sendToServer(SortRequestPacket.INSTANCE))
-                        .bounds(x + 150, y + 4, 18, 12)
-                        .build()
-        );
 
         // Left tabs (Pages 0-4)
         for (int i = 0; i < 5; i++) {
