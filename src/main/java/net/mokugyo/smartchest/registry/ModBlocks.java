@@ -18,7 +18,7 @@ public class ModBlocks {
             SmartChestBlock::new,
             BlockBehaviour.Properties.of()
                     .mapColor(MapColor.WOOD)
-                    .strength(3.0F, 12.0F)
+                    .strength(5.0F, 20.0F)
                     .sound(SoundType.WOOD)
                     .noOcclusion()
     );
