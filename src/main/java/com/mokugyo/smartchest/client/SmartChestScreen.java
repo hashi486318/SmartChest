@@ -106,6 +106,16 @@ public class SmartChestScreen extends AbstractContainerScreen<SmartChestMenu> {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        if (this.menu.getBlockEntity() != null) {
+            for (int i = 0; i < SmartChestBlockEntity.PAGE_COUNT; i++) {
+                ItemStack icon = this.menu.getBlockEntity().getPageIcon(i);
+                if (!icon.isEmpty()) {
+                    guiGraphics.renderItem(icon, this.tabIconX[i], this.tabIconY[i]);
+                }
+            }
+        }
+
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 }
