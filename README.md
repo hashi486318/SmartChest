@@ -1,6 +1,6 @@
 # SmartChest
 
-A storage-focused Minecraft mod for NeoForge 1.21.1 that makes organizing and accessing large amounts of items easier through a page-based interface.
+A storage-focused Minecraft mod that makes organizing and accessing large amounts of items easier through a page-based interface.
 
 ## Overview
 
