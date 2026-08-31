@@ -23,7 +23,7 @@ public class SmartChestMenu extends AbstractContainerMenu {
 
     private final SmartChestBlockEntity blockEntity;
     private final List<SmartChestSlot> chestSlots = new ArrayList<>();
-    private SmartChestSlot iconSlot;
+    private PageIconSlot iconSlot;
     private int currentPage = 0;
 
     public SmartChestMenu(int containerId, Inventory playerInventory, SmartChestBlockEntity blockEntity) {
@@ -63,8 +63,7 @@ public class SmartChestMenu extends AbstractContainerMenu {
                 }
             }
 
-            // Slot 54: page icon
-            this.iconSlot = new SmartChestSlot(blockEntity.getIconInventory(), currentPage, 178, -2);
+            this.iconSlot = new PageIconSlot(playerInventory, blockEntity.getIconInventory(), currentPage, 178, -2);
             this.addSlot(this.iconSlot);
         }
 
